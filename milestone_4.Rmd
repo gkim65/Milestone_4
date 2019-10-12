@@ -1,0 +1,126 @@
+---
+title: "Milestone 4"
+author: "Grace Kim"
+date: "10/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(raster)
+library(dplyr)
+library(spData)
+library(units)
+library(sf)
+library(tmap)    # for static and interactive maps
+library(leaflet) # for interactive maps
+library(mapview) # for interactive maps
+library(ggplot2) # tidyverse data visualization package
+library(shiny)   # for web applications
+library(ggmap)
+library(maps)
+library(mapdata)
+library(readr)
+library(tidycensus)
+library(readxl)
+library(janitor)
+korean_migration_data<- read_excel("data/LongTerm_International_Migration_by_Sex_and_Age_Nationals__Foreigners__20191005095057.xlsx") %>% clean_names()
+
+data<- read.csv("data/Copy of DEC_10_SF1_PCT7_with_ann.csv")
+  
+```
+
+## Bar Graph Graphics
+
+```{r Korean Migration Data}
+#Later want to change so that two different colored bars on one graph so its side to side
+
+korean_migration_data %>% 
+  filter(by_gender !="Total") %>%
+  filter(by_age !="unknown",by_age!="Total") %>%
+  group_by(by_age, by_gender) %>% 
+  summarize(incoming_migrants_total = sum(incoming_migrants)) %>% 
+  ggplot(aes(x = by_age, y=incoming_migrants_total, fill = by_gender))+ 
+    geom_col()+
+    facet_grid(~by_gender) +
+    labs(title = "Incoming Migrants into Korea separated based on Gender and Age")
+
+korean_migration_data %>% 
+  filter(by_gender !="Total") %>%
+  filter(by_age !="unknown",by_age!="Total") %>%
+  group_by(by_age, by_gender) %>% 
+  summarize(outcoming_migrants_total = sum(outcoming_migrants)) %>% 
+  ggplot(aes(x = by_age, y=outcoming_migrants_total, fill = by_gender))+ 
+    geom_col()+
+    facet_wrap(~by_gender) +
+    labs(title = "Outcoming Migrants into Korea separated based on Gender and Age")
+
+
+#korean_2<- korean_migration_data %>% 
+#  filter(by_gender == "Total") %>% 
+#  group_by(by_age) %>% 
+#  mutate(outcoming_migrants_total = sum(outcoming_migrants)) %>% 
+#  mutate(incoming_migrants_total = sum(incoming_migrants))
+  
+#plot<-  ggplot(korean_2,aes(x = by_age, y=incoming_migrants_total,))+ 
+#    geom_col()+
+#    labs(title = "Incoming and Outcoming Migrants in Korea")
+
+#plot<-  ggplot(korean_2,aes(x = by_age, y=incoming_migrants_total,))+ 
+#    geom_col()+
+#    labs(title = "Incoming and Outcoming Migrants in Korea")
+#plot  
+```
+
+## Playing with Maps!
+
+```{r MAP}
+#Want to change maps to show by county how many koreans live in each county
+
+usa<-map_data("usa")
+states<-map_data("state")
+ggplot() + geom_polygon(data = usa, aes(x=long, y = lat, group = group)) + 
+  coord_fixed(1.3)
+
+ggplot(data = states) + 
+  geom_polygon(aes(x = long, y = lat, fill = region, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  guides(fill=FALSE)  # do this to leave off the color legend
+
+shp <- #st_read("data/Copy of DEC_10_SF1_PCT7_with_ann.csv",
+        #          stringsAsFactors = FALSE) %>% 
+  st_read("data/acs_2012_2016_county_us_B27001.shp",
+               stringsAsFactors = FALSE) %>%
+  #rename(uninsured_2012 = un_2012,
+   #      uninsured_2016 = un_2016,
+    #     uninsured_diff = unnsrd_) %>%
+  mutate(STFIPS = stringr::str_sub(GEOID, 1, 2))
+  
+#county<- get_acs("county", year = 2010)
+  
+#shp2 <- county %>%
+ # select(GEOID, NAME) %>%
+  #left_join(data, by = c("GEOID", "D012")) %>%
+  #arrange(GEOID) %>%
+  #rename(uninsured_2012 = `2012`,
+  #  uninsured_2016 = `2016`,
+  #  uninsured_diff = diff)
+
+tm_shape(shp) +
+  tm_polygons()
+
+#library(maptools)
+#korea<-fortify(data, region = "GEOID") 
+# join tabular data
+
+# he#re we limit to the NYC counties
+
+#ggplot() +
+#  geom_polygon(, aes(x=long, y=lat, group = group, fill=percent), #color="grey50") +
+#   scale_fill_gradientn(colours = c("red", "white", "cadetblue"),
+#                       values = c(1,0.5, .3, .2, .1, 0))
+```
+
+
+
